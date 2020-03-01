@@ -1,22 +1,21 @@
 import gym
 import numpy as np
 
-env = gym.make('CartPole-v0')
+env = gym.make('LunarLander-v2')
 
 observation_size = env.observation_space.shape[0]
 action_size = env.action_space.n
 
 w1 = np.random.randn(observation_size, action_size)
-b1 = np.random.randn(action_size)
 
 
-def simulate(n, w, b, render):
+def simulate(n, w, render):
     total_reward = 0.0
     observation = env.reset()
     for _ in range(n):
         if render:
             env.render()
-        y = np.dot(observation, w) + b
+        y = np.dot(observation, w)
         action = np.argmax(y)
         observation, reward, done, _ = env.step(action)
         total_reward += reward
@@ -27,23 +26,25 @@ def simulate(n, w, b, render):
 
 training_steps = 10000
 learning_rate = 1e-3
+render_frequency = 10
+max_frames = 250
 for i in range(training_steps):
-    base_reward = simulate(1000, w1, b1, i % 10 == 9)
-    w1gds = []
-    b1gds = []
     batch_size = 10
+    avg_score = 0
+    for _ in range(batch_size):
+        avg_score += simulate(max_frames, w1, False)
+    avg_score /= batch_size
+    if i % render_frequency == 0:
+        simulate(max_frames, w1, True)
+        print(avg_score)
+    w1gds = []
     for _ in range(batch_size):
         w1gd = np.random.randn(observation_size, action_size)
-        b1gd = np.random.randn(action_size)
         nw1 = w1 + w1gd
-        nb1 = b1 + b1gd
         total_reward = 0.0
-        num_steps = 1000
-        reward = simulate(num_steps, nw1, nb1, False)
-        delta_r = reward - base_reward
+        reward = simulate(max_frames, nw1, False)
+        delta_r = reward - avg_score
         w1gds.append(w1gd * delta_r)
-        b1gds.append(b1gd * delta_r)
     w1 = w1 + sum(w1gds) * learning_rate / batch_size
-    b1 = b1 + sum(b1gds) * learning_rate / batch_size
 
 env.close()
