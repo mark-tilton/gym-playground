@@ -1,12 +1,12 @@
 import gym
 import numpy as np
 
-env = gym.make('LunarLander-v2')
+env = gym.make('CartPole-v0')
 
 observation_size = env.observation_space.shape[0]
 action_size = env.action_space.n
 
-w1 = np.random.randn(observation_size, action_size)
+w1 = np.zeros((observation_size, action_size))
 
 
 def simulate(n, w, render):
@@ -41,7 +41,6 @@ for i in range(training_steps):
     for _ in range(batch_size):
         w1gd = np.random.randn(observation_size, action_size)
         nw1 = w1 + w1gd
-        total_reward = 0.0
         reward = simulate(max_frames, nw1, False)
         delta_r = reward - avg_score
         w1gds.append(w1gd * delta_r)
